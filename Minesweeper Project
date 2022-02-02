@@ -1,1 +1,96 @@
+#include <SFML/Graphics.hpp>
+#include <iostream>
+#include "Tile.h"
+// Tile constructor to load the tile texture and sprite. Also loads flag texture and sprite
+Tile::Tile()
+{
+    TextTile = new sf::Texture;
+    TextTile->loadFromFile("images/tile_hidden.png");
+    SpriteTile = new sf::Sprite;
+    TextFlag = new sf::Texture;
+    TextFlag->loadFromFile("images/flag.png");
+    flagSprite = new sf::Sprite;
+    flagSprite->setTexture(*TextFlag);
+}
+void Tile::drawWindow(sf::RenderWindow* window, bool debugMode)
+{
+    SpriteTile->setTexture(*TextTile);
+    SpriteTile->setPosition(xPix, yPix);
+    // draw from SFML lib
+    window->draw(*SpriteTile);
+
+    if(flagged)
+    {
+        flagSprite->setPosition(xPix, yPix);
+        window->draw(*flagSprite);
+    }
+    if((debugMode && mines) or (clicked && mines))
+    {
+        Spritemine->setTexture(*TextMine);
+        Spritemine->setPosition(xPix, yPix);
+        window->draw(*Spritemine);
+    }
+
+    else if(clicked && TextMine &&mineAdj > 0)
+    {
+        Spritemine->setTexture(*TextMine);
+        Spritemine->setPosition(xPix, yPix);
+        window->draw(*Spritemine);
+    }
+}
+void Tile::setX(int xpos)
+{
+    xPosition = xpos;
+    xPix = 32 * xpos;
+}
+
+void Tile::setY(int ypos)
+{
+    yPosition = ypos;
+    yPix = 32 * ypos;
+}
+
+void Tile::click()
+{
+    if(flagged or clicked)
+    {
+        return;
+    }
+
+    clicked = true;
+
+    if(mines)
+    {
+        return;
+    }
+
+    TextTile->loadFromFile("images/tile_revealed.png");
+}
+
+void Tile::setNumAdjacentMines(int num)
+{
+    mineAdj = num;
+    if(mines) // load mine texture
+    {
+        TextMine= new sf::Texture;
+        TextMine->loadFromFile("images/mine.png");
+        Spritemine = new sf::Sprite;
+    } else if(mineAdj > 0)
+    {
+        TextMine = new sf::Texture;
+        TextMine->loadFromFile(std::string("images/number_") + std::to_string(num) + ".png");
+        Spritemine = new sf::Sprite;
+    }
+}
+
+void Tile::flag()
+{
+    if(clicked)
+    {
+        return;
+    }
+    flagged = !flagged;
+}
+
+
 
