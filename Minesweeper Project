@@ -1,1 +1,63 @@
+#pragma once
+#include <SFML/Graphics.hpp>
+#include <random>
+#include <vector>
+#include "Tile.h"
+using namespace std;
+class Board
+{
+    map<int, int> Rand(int mineNum);
+    std::map<int, int> Fileload(std::string filepath, int cols, int rows);
+    void calculateAdjTiles(int cols, int rows);
+    void generateMineOnBoard(std::map<int, int> mineMap,int cols, int rows);
+    void checkWon();
+    Tile* tiles[25][16]{};
+    int mineNum = 0;
+    int ClickNum = 0;
+    int FlagNum = 0;
+    bool L = false;
+    bool W = false;
+    void end();
+    void reset(int cols, int rows);
+    bool dbM = false;
+    sf::Texture* defaultFace{};
+    sf::Texture* faceLose{};
+    sf::Texture* dubFace{};
+    sf::Sprite* resetButton{};
+    sf::Texture* debugTexture{};
+    sf::Sprite* debugSprite{};
+    sf::Texture* testTexture1{};
+    sf::Sprite* spriteTest1{};
+    sf::Texture* testTexture2{};
+    sf::Sprite* spriteTest2{};
+    sf:: Texture* testTexture3{};
+    sf:: Sprite* spriteTest3{};
+    sf::Texture* counter0{};
+    sf::Texture* counter1{};
+    sf::Texture* counter2{};
+    sf::Texture* counter3{};
+    sf::Texture* counter4{};
+    sf::Texture* counter5{};
+    sf::Texture* counter6{};
+    sf::Texture* counter7{};
+    sf::Texture* counter8{};
+    sf::Texture* counter9{};
+    sf::Texture* counter10{};
+    sf::Sprite* digit1{};
+    sf::Sprite* digit2{};
+    sf::Sprite* digit3{};
+    sf::Sprite* digit4{};
+   vector<sf::Texture*> textures;
+public:
+    Board();
+    Board(int cols, int rows, int mineNum);
+    void load();
+    void initialize();
+    void click(int x, int y, bool left, int cols, int rows, int mineNum);
+    void clickTile(int x, int y, int cols, int rows);
+    void draw(sf::RenderWindow* window,int cols, int rows);
+    Tile *getTile(int x, int y);
+    void initSprite();
+};
+
 
