@@ -1,1 +1,385 @@
+//
+// Created by Adarsh Bala on 11/2/21.
+//
+
+#include <iostream>
+#include <vector>
+#include <string>
+#include "image.h"
+
+using namespace std;
+image::image(const string& str)
+{
+    Read(str +".tga" );
+}
+void image::Read(const string& filename)
+{
+    ifstream file(filename, ios_base::binary);
+    if(file.is_open())
+    {
+        file.read(&header.idLen, sizeof(header.idLen));
+        file.read(&header.ColType, sizeof(header.ColType));
+        file.read(&header.dataCodeType, sizeof(header.dataCodeType));
+        file.read((char *)&header.colorMapOrigin, sizeof(header.colorMapOrigin));
+        file.read((char *)&header.colorMapLength, sizeof(header.colorMapLength));
+        file.read(&header.colorMapDepth, sizeof(header.colorMapDepth));
+        file.read((char *)&header.xOrg, sizeof(header.xOrg));
+        file.read((char *)&header.yOrg, sizeof(header.yOrg));
+        file.read((char *)&header.width, sizeof(header.width));
+        file.read((char *)&header.height, sizeof(header.height));
+        file.read(&header.bitsPerPix, sizeof(header.bitsPerPix));
+        file.read(&header.imageDescription, sizeof(header.imageDescription));
+        unsigned int hw = header.width*header.height;
+        vector<Pix> v(hw);
+        for (unsigned int i = 0; i < hw; i++)
+        {
+
+            file.read((char *)&v[i].B, 1);
+            file.read((char *)&v[i].G, 1);
+            file.read((char *)&v[i].R, 1);
+
+        }
+        pixels = v;
+    }
+
+    else
+    {
+        cout<<"file not open"<<endl;
+    }
+
+}
+void image::Write(const string& filename)
+{
+    ofstream fileout(filename, ios_base::binary);
+    if(fileout.is_open())
+    {
+        fileout.write((char *)&header.idLen, sizeof(header.idLen));
+        fileout.write((char *)&header.ColType, sizeof(header.ColType));
+        fileout.write((char *)&header.dataCodeType, sizeof(header.dataCodeType));
+        fileout.write((char *)&header.colorMapOrigin, sizeof(header.colorMapOrigin));
+        fileout.write((char *)&header.colorMapLength, sizeof(header.colorMapLength));
+        fileout.write((char *)&header.colorMapDepth, sizeof(header.colorMapDepth));
+        fileout.write((char *)&header.xOrg, sizeof(header.xOrg));
+        fileout.write((char *)&header.yOrg, sizeof(header.yOrg));
+        fileout.write((char *)&header.width, sizeof(header.width));
+        fileout.write((char *)&header.height, sizeof(header.height));
+        fileout.write((char *)&header.bitsPerPix, sizeof(header.bitsPerPix));
+        fileout.write((char *)&header.imageDescription, sizeof(header.imageDescription));
+        for (unsigned int i = 0; i < pixels.size(); i++) {
+
+            fileout.write((char *)&pixels[i].B, 1);
+            fileout.write((char *)&pixels[i].G, 1);
+            fileout.write((char *)&pixels[i].R, 1);
+        }
+
+    }
+   fileout.close();
+}
+
+bool image::Equal(image image) {
+
+    bool equal = false;
+
+
+    if (header.idLen == image.header.idLen )
+    {
+        equal = true;
+
+    }
+    else
+    {
+        return false;
+    }
+    if (header.ColType == image.header.ColType) {
+        equal = true;
+
+    }
+    else
+    {
+        return false;
+    }
+    if (header.dataCodeType == image.header.dataCodeType) {
+        equal = true;
+
+    }
+    else
+    {
+        return false;
+    }
+    if (header.colorMapOrigin == image.header.colorMapOrigin) {
+        equal = true;
+
+    }
+    else
+    {
+        return false;
+    }
+    if (header.colorMapLength == image.header.colorMapLength) {
+        equal = true;
+
+    }
+    else
+    {
+        return false;
+    }
+    if (header.colorMapDepth == image.header.colorMapDepth) {
+        equal = true;
+
+    }
+    else
+    {
+        return false;
+    }
+    if (header.xOrg == image.header.xOrg) {
+        equal = true;
+
+    }
+    else
+    {
+        return false;
+    }
+    if (header.yOrg == image.header.yOrg) {
+        equal = true;
+
+    }
+    else
+    {
+        return false;
+    }
+    if (header.width == image.header.width) {
+        equal = true;
+
+    }
+    else
+    {
+        return false;
+    }
+    if (header.height == image.header.height) {
+        equal = true;
+
+    }
+    else
+    {
+        return false;
+    }
+    if (header.bitsPerPix == image.header.bitsPerPix) {
+        equal = true;
+
+    }
+    else
+    {
+        return false;
+    }
+    if (header.imageDescription == image.header.imageDescription) {
+        equal = true;
+
+    }
+    else
+    {
+        return false;
+    }
+
+    if (pixels.size() == image.pixels.size()) {
+        equal = true;
+
+    }
+    else
+    {
+        return false;
+    }
+    for (unsigned int i = 0; i < pixels.size(); i++) {
+
+        if (pixels[i].B == image.pixels[i].B) {
+            equal = true;
+        }
+
+        if (pixels[i].G == image.pixels[i].G) {
+            equal = true;
+        }
+        if (pixels[i].R == image.pixels[i].R) {
+            equal = true;
+        }
+
+
+    }
+
+    return equal;
+}
+
+void image::ToChan(string channel) {
+
+    int value = 0;
+
+    if (channel == "blue") {
+
+        for (unsigned int i = 0; i < pixels.size(); i++) {
+
+            value = pixels[i].B;
+            pixels[i].G = value;
+            pixels[i].R = value;
+
+        }
+
+    }
+    else if (channel == "green") {
+
+
+        for (unsigned int i = 0; i < pixels.size(); i++) {
+
+            value = pixels[i].G;
+            pixels[i].B = value;
+            pixels[i].R = value;
+
+        }
+
+    }
+    else if (channel == "red") {
+
+
+        for (unsigned int i = 0; i < pixels.size(); i++) {
+
+            value = pixels[i].R;
+            pixels[i].G = value;
+            pixels[i].B = value;
+
+        }
+
+    }
+
+}
+void image::AddChan( string channel, int value )
+{
+
+    if (channel == "blue") {
+
+        for (unsigned int i = 0; i < pixels.size(); i++) {
+
+            if ((pixels[i].B + value) > 255) {
+                pixels[i].B = 255;
+            }
+            else {
+                pixels[i].B += value;
+            }
+
+        }
+
+    }
+    if (channel == "green") {
+
+
+        for (unsigned int i = 0; i < pixels.size(); i++) {
+
+            if ((pixels[i].G + value) > 255) {
+                pixels[i].G = 255;
+            }
+            else {
+                pixels[i].G += value;
+            }
+
+        }
+    }
+    if (channel == "red") {
+
+
+        for (unsigned int i = 0; i < pixels.size(); i++) {
+
+            if ((pixels[i].R + value) > 255) {
+                pixels[i].R = 255;
+            }
+            else {
+                pixels[i].R += value;
+            }
+
+        }
+    }
+
+
+
+}
+
+void image::ScaleFile(string channel, int value) {
+
+    if (channel == "Blue") {
+
+        for (unsigned int i = 0; i < pixels.size(); i++) {
+
+            if ((pixels[i].B * value) > 255) {
+                pixels[i].B = 255;
+            }
+            else {
+                pixels[i].B *= value;
+            }
+
+        }
+
+    }
+    if (channel == "Green") {
+
+
+        for (unsigned int i = 0; i < pixels.size(); i++) {
+
+            if ((pixels[i].G * value) > 255) {
+                pixels[i].G = 255;
+            }
+            else {
+                pixels[i].G *= value;
+            }
+
+        }
+    }
+    if (channel == "Red") {
+
+
+        for (unsigned int i = 0; i < pixels.size(); i++) {
+
+            if ((pixels[i].R * value) > 255) {
+                pixels[i].R = 255;
+            }
+            else {
+                pixels[i].R *= value;
+            }
+
+        }
+    }
+}
+
+void image::Reload()
+{
+    ifstream file(filename, ios_base::binary);
+    if (file.is_open())
+    {
+        file.read(&header.idLen, sizeof(header.idLen));
+        file.read(&header.ColType, sizeof(header.ColType));
+        file.read(&header.dataCodeType, sizeof(header.dataCodeType));
+        file.read((char *)&header.colorMapOrigin, sizeof(header.colorMapOrigin));
+        file.read((char *)&header.colorMapLength, sizeof(header.colorMapLength));
+        file.read(&header.colorMapDepth, sizeof(header.colorMapDepth));
+        file.read((char *)&header.xOrg, sizeof(header.xOrg));
+        file.read((char *)&header.yOrg, sizeof(header.yOrg));
+        file.read((char *)&header.width, sizeof(header.width));
+        file.read((char *)&header.height, sizeof(header.height));
+        file.read(&header.bitsPerPix, sizeof(header.bitsPerPix));
+        file.read(&header.imageDescription, sizeof(header.imageDescription));
+        unsigned int hw = header.width*header.height;
+        vector<Pix> v(hw);
+        for (unsigned int i = 0; i < hw; i++)
+        {
+
+            file.read((char *)&v[i].B, 1);
+            file.read((char *)&v[i].G, 1);
+            file.read((char *)&v[i].R, 1);
+
+        }
+        pixels = v;
+    }
+
+}
+
+
+
+
+
+
+
+
 
