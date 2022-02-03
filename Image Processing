@@ -1,1 +1,431 @@
+#include <iostream>
+#include <fstream>
+#include "image.h"
+#include <cmath>
+#include <string>
+using namespace std;
+void Multiply(image &im1, image &im2) {
+    for (unsigned int i = 0; i < im1.pixels.size(); i++) {
+
+        im1.pixels[i].B = (int) (round(
+                ((double) im1.pixels[i].B * (double) im2.pixels[i].B) / 255)); //multiply, blends color blue
+        im1.pixels[i].G = (int) (round(
+                ((double) im1.pixels[i].G * (double) im2.pixels[i].G) / 255)); //multipy, green color
+        im1.pixels[i].R = (int) (round(
+                ((double) im1.pixels[i].R * (double) im2.pixels[i].R) / 255));//multiply , blends red color
+    }
+}
+
+void SubtractAll(image &im1, image &im2) {
+
+
+    for (unsigned int i = 0; i < im1.pixels.size(); i++) {
+        int B = (int)im1.pixels[i].B - (int) im2.pixels[i].B;
+        int G = (int)(im1.pixels[i].G - (int) im2.pixels[i].G);
+        int R = (int)(im1.pixels[i].R - (int) im2.pixels[i].R);
+
+        if (B > 255) { B = 255; }
+        if (G >255) { G = 255; }
+        if (R > 255) { R = 255; }
+
+        if (B < 0) { B = 0; }
+        if (G < 0) { G = 0; }
+        if (R< 0) { R = 0; }
+
+        im1.pixels[i].B = B;
+        im1.pixels[i].G = G;
+        im1.pixels[i].R = R;
+
+    }
+
+
+}
+// Subtract function
+void Subtract(image &image1, image &image2) {
+
+
+    int Blue;
+    int Red;
+    int Green;
+
+    for (unsigned int i = 0; i < image1.pixels.size(); i++) {
+
+        Blue = (int)(image2.pixels[i].B - image1.pixels[i].B);
+        Green = (int)(image2.pixels[i].G - image1.pixels[i].G);
+        Red = (int)(image2.pixels[i].R - image1.pixels[i].R);
+
+        if (Blue < 0) { Blue = 0; }
+        if (Green < 0) { Green = 0; }
+        if (Red< 0) { Red = 0; }
+
+        image1.pixels[i].B = Blue;
+        image1.pixels[i].G = Green;
+        image1.pixels[i].R = Red;
+
+    }
+
+}
+//
+void Screen(image &a, image &b) {
+    for (unsigned int i = 0; i < a.pixels.size(); i++) {
+
+        a.pixels[i].B =(int) ( round(255 - (((double)(255 - a.pixels[i].B))*((double)(255 - b.pixels[i].B)) / 255)));
+        a.pixels[i].G = (int) (round(255 - (((double)(255 - a.pixels[i].G))*((double)(255 - b.pixels[i].G)) / 255)));
+        a.pixels[i].R = (int) (round(255 - (((double)(255 - a.pixels[i].R))*((double)(255 - b.pixels[i].R)) / 255)));
+    }
+
+
+
+}
+
+void Overlay(image &a, image &b) {
+
+
+
+    for (unsigned int i = 0; i < a.pixels.size(); i++) {
+
+        image::Pix pixel;
+
+
+        if (((a.pixels[i].R) / 255.0)>0.5) {
+
+            pixel.R = (int) (((1 - (2 * (1 - a.pixels[i].R / 255.0)*(1 - b.pixels[i].R / 255.0)))*255.0) + 0.5f);
+
+        }
+        else {
+            pixel.R = (int) (((2 * (a.pixels[i].R / 255.0)*(b.pixels[i].R / 255.0))*255.0) + 0.5f);
+
+        }
+
+        if (((a.pixels[i].G) / 255.0)>0.5) {
+            pixel.G = (int) (((1 - (2 * (1 - a.pixels[i].G / 255.0)*(1 - b.pixels[i].G / 255.0)))*255.0) + 0.5f);
+
+        }
+        else {
+            pixel.G = (int) (((2 * (a.pixels[i].G / 255.0)*(b.pixels[i].G / 255.0))*255.0) + 0.5f);
+
+        }
+        if (((a.pixels[i].B) / 255.0)>0.5) {
+       pixel.B = (int) (((1 - (2 * (1 - a.pixels[i].B / 255.0)*(1 - b.pixels[i].B / 255.0)))*255.0) + 0.5f);
+
+
+        }
+        else {
+            pixel.B = (int) (((2 * (a.pixels[i].B / 255.0)*(b.pixels[i].B / 255.0))*255.0) + 0.5f);
+
+        }
+
+        a.pixels[i] = pixel;
+
+    }
+
+
+}
+
+
+
+
+void Rotate(image &image1, image &image2) {
+
+    int num = 0;
+    if(image1.pixels.size() !=0)
+    {
+        for ( unsigned int i = image1.pixels.size() - 1; i > 0; i--) {
+
+            image2.pixels[i] = image1.pixels[num];
+            num++;
+        }
+    }
+
+
+
+}
+
+
+void Combine(image &Red, image &Green, image &Blue) { //
+
+    for (unsigned int i = 0; i < Red.pixels.size(); i++) {
+
+        Red.pixels[i].G = Green.pixels[i].G;
+        Red.pixels[i].B = Blue.pixels[i].B;
+
+    }
+
+}
+
+int main()
+{
+    bool f =true;
+    int count =0;
+    int opt =0;
+    while(f)
+    {
+        cout << "Make a selection: ";
+        cout << "\n1. Multiply layer1.tga with pattern1.tga";
+        cout << "\n2. Subtract layer2.tga with car.tga";
+        cout << "\n3. Multiply layer1.tga with pattern2.tga and add text";
+        cout << "\n4. Multiply layer2.tga with circles.tga combined with option 3 using Screen";
+        cout << "\n5. Combine layer1.tga with pattern1.tga using the Overlay blending mode";
+        cout << "\n6. Load car.tga and add 200 to the G channel";
+        cout << "\n7. Load car.tga and scale the R channel by 4 and B by 0";
+        cout << "\n8. Load car.tga and write each channel to a separate file";
+        cout << "\n9. Combine layer_R.tga, layer_G.tga, layer_B.tga";
+        cout << "\n10. Rotate text2.tga 180 degrees\n";
+        opt = opt+1;
+
+
+
+        if(opt !=0 && opt !=11)
+        {
+            switch (opt) {
+                case 1:
+                {
+                    image layer1 = image("input/layer1");
+                    image pattern1 = image("input/pattern1");
+                    image part1ex = image("examples/EXAMPLE_part1");
+                    Multiply(layer1, pattern1);
+                    layer1.Write("output/part1.tga");
+                    cout << "Test1"<<endl;
+                    if (layer1.Equal(part1ex) && layer1.pixels.size() !=0) {
+                        cout << "Passed!"<<endl;
+                        count ++;
+                    }
+                    else{
+                        cout << "Failed!"<<endl;
+                    }
+                    layer1.Reload();
+
+
+
+                }break;
+                case 2:
+                {
+                    image layer2 = image("input/layer2");
+                    image car = image("input/car");
+                    image part2ex = image("examples/EXAMPLE_part2");
+                    Subtract(layer2, car);
+                    layer2.Write("output/part2.tga");
+                    cout << endl << "TEST 2 ";
+                    if (layer2.Equal(part2ex) && layer2.pixels.size() !=0) {
+                        cout << "Passed!"<<endl;
+                        count ++;
+                    }
+                    else {
+                        cout << "Failed!"<<endl;
+                    }
+                    layer2.Reload();
+
+                }break;
+                case 3:
+                {
+                    image layer1 = image("input/layer1");
+                    image pattern2 = image("input/pattern2");
+                    image text = image("input/text");
+                    image part3ex = image("examples/EXAMPLE_part3");
+                    Multiply(layer1, pattern2);
+                    Screen(text, layer1);
+                    text.Write("output/part3.tga");
+                    cout << endl << "TEST 3 ";
+                    if (text.Equal(part3ex) && text.pixels.size() !=0) {
+
+                        cout << "Passed!"<<endl;
+                        count ++;
+                    }
+                    else {
+                        cout << "Failed!"<<endl;
+                    }
+                    layer1.Reload();
+                    text.Reload();
+                }break;
+                case 4:
+                {
+                    image layer2 = image("input/layer2");
+                    image circles = image("input/circles");
+                    Multiply(layer2, circles);
+                    image pattern2 = image("input/pattern2");
+                    SubtractAll(layer2, pattern2);
+                    layer2.Write("output/part4.tga");
+                    image part4ex = image("examples/EXAMPLE_part4");
+                    cout << endl << "TEST 4 ";
+                    if (layer2.Equal(part4ex) && layer2.pixels.size() !=0) {
+
+                        cout << "Passed!"<<endl;
+                        count ++;
+                    }
+                    else {
+                        cout << "Failed!"<<endl;
+                    }
+
+                    layer2.Reload();
+
+                }break;
+                case 5:
+                {
+                    image layer5 = image("input/layer1");
+                    image pattern1 = image("input/pattern1");
+                    image part5ex = image("examples/EXAMPLE_part5");
+                    Overlay(pattern1, layer5);
+                    pattern1.Write("output/part5.tga");
+                    cout << endl << "TEST 5 ";
+                    if (pattern1.Equal(part5ex) && pattern1.pixels.size() !=0) {
+
+                        cout << "Passed!"<<endl;
+                        count ++;
+                    }
+                    else {
+                        cout << "Failed!"<<endl;
+                    }
+
+                    pattern1.Reload();
+                    break;
+
+                }
+                case 6:
+                {
+                    image car = image("input/car");
+                    image part6ex = image("examples/EXAMPLE_part6");
+                    car.AddChan("green",200);
+                    car.Write("output/part6.tga");
+                    cout<<"Test 6"<<endl;
+                    if (car.Equal(part6ex) && car.pixels.size() !=0) {
+
+                        cout << "Passed!"<<endl;
+                        count++;
+
+                    }
+                    else {
+                        cout << "Failed!"<<endl;
+                    }
+                    car.Reload();
+
+                }break;
+                case 7:
+                {
+                    image car = image("input/car");
+                    image part7ex = image("examples/EXAMPLE_part7");
+                    car.ScaleFile("Blue",0);
+                    car.ScaleFile("Red",4);
+                    car.Write("output/part7.tga");
+                    cout<<"Test 7"<<endl;
+                    if(car.Equal(part7ex) && car.pixels.size() !=0)
+                    {
+                        cout<<"Passed!"<<endl;
+                        count++;
+                    }
+                    else
+                    {
+                        cout<<"Failed!"<<endl;
+                    }
+                    car.Reload();
+
+                }break;
+                case 8:
+                {
+
+                    image Ex8blue = image("examples/EXAMPLE_part8_b");
+                    image Ex8green = image("examples/EXAMPLE_part8_g");
+                    image Ex8red = image("examples/EXAMPLE_part8_r");
+                    image car = image("input/car");
+                    car.ToChan("blue");
+                    car.Write("output/part8_b.tga");
+                    cout<<"Test 8 blue"<<endl;
+                    if(car.Equal(Ex8blue) && car.pixels.size() !=0)
+                    {
+                        cout<<"Passed!"<<endl;
+                        count++;
+                    }
+                    else
+                    {
+                        cout<<"Failed!"<<endl;
+                    }
+                    car = image("input/car");
+                    car.ToChan("red");
+                    car.Write("output/part8_r.tga");
+                    cout<<"Test 8 red"<<endl;
+                    if(car.Equal(Ex8red)&& car.pixels.size() !=0)
+                    {
+                        cout<<"Passed!"<<endl;
+                        count++;
+                    }
+                    else
+                    {
+                        cout<<"Failed!"<<endl;
+                    }
+                    //car.Reload();
+                    car = image("input/car");
+                    car.ToChan("green");
+                    car.Write("output/part8_g.tga");
+                    cout<<"Test 8 green"<<endl;
+                    if(car.Equal(Ex8green)&& car.pixels.size() !=0)
+                    {
+                        cout<<"Passed!"<<endl;
+                        count ++;
+                    }
+                    else
+                    {
+                        cout<<"Failed!"<<endl;
+                    }
+                    car.Reload();
+                }break;
+
+                case 9:
+                {
+                    image layerBlue = image("input/layer_blue");
+                    image layerGreen= image("input/layer_green");
+                    image layerRed = image("input/layer_red");
+                    image part9ex = image("examples/EXAMPLE_part9");
+                    Combine(layerRed,layerGreen,layerBlue);
+                    layerRed.Write("output/part9.tga");
+                    cout<<"Test 9"<<endl;
+                    if(layerRed.Equal(part9ex)&& layerRed.pixels.size() !=0)
+                    {
+                        cout<<"Passed!"<<endl;
+                        count++;
+                    }
+                    else
+                    {
+                        cout<<"Failed!"<<endl;
+                    }
+                    layerRed.Reload();
+                }break;
+                case 10: {
+                    image txtRotate = image("input/text2");
+                    image rotate = txtRotate;
+                    image part10ex = image("examples/EXAMPLE_part10");
+                    image ogRotate = part10ex;
+                    Rotate(rotate, txtRotate);
+                    txtRotate.Write("output/part10.tga");
+                    Rotate(ogRotate, part10ex);
+                    if (   txtRotate.Equal(ogRotate) && txtRotate.pixels.size() !=0) {
+                        cout << "Passed!" << endl;
+                        count++;
+                    } else {
+                        cout << "Failed!" << endl;
+
+                    }
+                    txtRotate.Reload();
+
+                    f=false;
+
+                break;
+                }
+
+                default:
+                {
+                    cout<<"Invalid option";
+                }
+
+
+            }
+
+            cout<<"Test results: "<<count<<"/12"<<endl;
+        }
+
+
+    }
+
+    return 0;
+}
+
+
 
