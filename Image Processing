@@ -1,1 +1,53 @@
+//
+// Created by Adarsh Bala on 11/2/21.
+//
+
+#ifndef PRJ2_IMAGE_H
+#define PRJ2_IMAGE_H
+#pragma once
+#include <iostream>
+#include <vector>
+#include <fstream>
+#include <string>
+using namespace std;
+struct image {
+
+    struct Header
+    {
+        char idLen;
+        char ColType;
+        char dataCodeType;
+        short colorMapOrigin;
+        short colorMapLength;
+        char colorMapDepth;
+        short xOrg;
+        short yOrg;
+        short width;
+        short height;
+        char bitsPerPix;
+        char imageDescription;
+    };
+    struct Pix
+    {
+        unsigned char R;
+        unsigned char G;
+        unsigned char B;
+
+    };
+    Header header;
+    vector<Pix> pixels;
+    string filename;
+    image();
+    image(const string&);
+    void Read(const string&);
+    void Write(const string&);
+    void Reload();
+    bool Equal(image);
+    void AddChan(const string, int);
+    void ScaleFile(const string, int);
+    void ToChan(const string);
+};
+
+
+#endif //PRJ2_IMAGE_H
 
