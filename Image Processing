@@ -1,1 +1,462 @@
 
+#include <iostream>
+#include <SFML/Graphics.hpp>
+#include <random>
+#include <fstream>
+#include <stdio.h>
+#include "Boards.h"
+using namespace std;
+void Board::draw(sf::RenderWindow *window,int cols, int rows)
+{
+    int display;
+    int first;
+    int second;
+    int third;
+    int four;
+    getTile(cols,rows);
+    for (unsigned int i=0; i<cols; i++) {
+        for(unsigned int j = 0; j < rows; j++)
+        {
+            tiles[i][j]->drawWindow(window, dbM);
+        }
+    }
+    resetButton->setPosition(368, 512);
+    if(L)
+    {
+
+        resetButton->setTexture(*faceLose);
+
+    } else if (W)
+    {
+        for (unsigned int i=0; i<cols; i++) {
+            for(unsigned int j = 0; j < rows; j++)
+            {
+                if(tiles[i][j]->getMines())
+                {
+                    tiles[i][j]->setFlag(true);
+                }
+                tiles[i][j]->drawWindow(window, dbM);
+            }
+        }
+
+        resetButton->setTexture(*dubFace);
+        display = 0;
+        dbM = false;
+    } else {
+        resetButton->setTexture(*defaultFace);
+    }
+    window->draw(*resetButton);
+    debugSprite->setTexture(*debugTexture);
+    debugSprite->setPosition(496, 512);
+    window->draw(*debugSprite);
+    spriteTest1->setTexture(*testTexture1);
+    spriteTest1->setPosition(560, 512);
+    window->draw(*spriteTest1);
+    spriteTest2->setTexture(*testTexture2);
+    spriteTest2->setPosition(624, 512);
+    window->draw(*spriteTest2);
+    spriteTest3 -> setTexture(*testTexture3);
+    spriteTest3->setPosition(688, 512);
+    window->draw(*spriteTest3);
+    if(!W)
+    {
+        display = mineNum - FlagNum;
+    }
+
+    if(display >=0)
+    {
+        first = display/100;
+        second = (display%100)/10;
+        third = (display%100)%10;
+        digit1->setTexture(*textures[first]);
+        digit1->setPosition(0, 512);
+        window->draw(*digit1);
+        digit2->setTexture(*textures[second]);
+        digit2->setPosition(22, 512);
+        window->draw(*digit2);
+        digit3->setTexture(*textures[third]);
+        digit3->setPosition(44, 512);
+        window->draw(*digit3);
+    }
+    else
+    {display =FlagNum;
+        first =10;
+        second =display/100;
+        third =  (display%100)/10;
+        four =(display%100)%10;
+
+        digit1->setTexture(*textures[first]);
+        digit1->setPosition(0, 512);
+        window->draw(*digit1);
+        digit2->setTexture(*textures[second]);
+        digit2->setPosition(22, 512);
+        window->draw(*digit2);
+        digit3->setTexture(*textures[third]);
+        digit3->setPosition(44, 512);
+        window->draw(*digit3);
+        digit4->setTexture(*textures[four]);
+        digit4->setPosition(66, 512);
+        window->draw(*digit4);
+
+
+    }
+
+
+}
+
+Tile* Board::getTile(int cols, int rows)
+{
+    return tiles[cols][rows];
+}
+
+void Board::click(int x, int y, bool left, int cols, int rows, int mineNum)
+{
+    getTile(cols,rows);
+    if(y < 512 && left)
+    {
+        int xPos = x / 32;
+        int yPos = y /32;
+        clickTile(xPos, yPos,cols,rows);
+        checkWon();
+    } else if(y < 512 && !left)
+    {
+        int xPos = x /32;
+        int yPos = y / 32;
+        Tile* tile = tiles[xPos][yPos];
+        if(tile->getClicked() or W or L) { return; }
+        tile->flag();
+        if(tile->getFlagged()) { FlagNum++; }
+        else FlagNum--;
+        checkWon();
+    } else if(x >= 368 && x <= 432 && y >= 512 && y <= 576 && left)
+    {
+        reset(cols,rows);
+        map<int, int> minemap = Rand(mineNum);
+        generateMineOnBoard(minemap,cols,rows);
+        calculateAdjTiles(cols,rows);
+    } else if(x >= 496 && x <= 560 && y >= 512 && y <= 576 && left)
+    {
+        if(!L)
+        {
+            dbM = !dbM;
+        }
+
+    } else if(x >= 560 && x <= 624 && y >= 512 & y < 576 && left)
+    {
+        reset(cols,rows);
+        map<int, int> minemap = Fileload("boards/testboard1.brd",cols,rows);
+        generateMineOnBoard(minemap,cols,rows);
+        calculateAdjTiles(cols,rows);
+    } else if(x >= 624 && x <= 688 && y >= 512 && y < 576 && left) // test 2
+    {
+        reset(cols,rows);
+        map<int, int> minemap = Fileload("boards/testboard2.brd",cols,rows);
+        generateMineOnBoard(minemap,cols,rows);
+        calculateAdjTiles(cols,rows);
+    }
+    else if(x>=688 && y>=512)
+    {
+        reset(cols,rows);
+        map<int, int> minemap = Fileload("boards/testboard3.brd",cols,rows);
+        generateMineOnBoard(minemap,cols,rows);
+        calculateAdjTiles(cols,rows);
+    }
+}
+// method for tile click
+void Board::clickTile(int xPos, int yPos, int cols, int rows)
+{getTile(xPos,yPos);
+    Tile* tile = tiles[xPos][yPos];
+
+    if(tile->getClicked() or W or L or tile->getFlagged())
+    {
+        return;
+    }
+    tile->click();
+    ClickNum++;
+    if(tile->getMines())
+    {
+        end();
+    }
+
+    int Mineadj = tiles[xPos][yPos]->getNumAdjacentMines();
+    if(Mineadj == 0)
+    {
+        if(xPos > 0)
+        {
+            clickTile(xPos - 1, yPos,cols,rows);
+        }
+        if(xPos < cols-1)
+        {
+            clickTile(xPos + 1, yPos,cols,rows);
+        }
+        if(yPos > 0)
+        {
+            clickTile(xPos, yPos - 1,cols,rows);
+        }
+        if(yPos < rows-1)
+        {
+            clickTile(xPos, yPos + 1,cols,rows);
+        }
+        if(xPos > 0 && yPos > 0)
+        {
+            clickTile(xPos - 1, yPos - 1,cols,rows);
+        }
+        if(xPos > 0 && yPos < rows-1)
+        {
+            clickTile(xPos - 1, yPos + 1,cols,rows);
+        }
+        if(xPos < cols-1 && yPos > 0)
+        {
+            clickTile(xPos + 1, yPos - 1,cols,rows);
+        }
+        if(xPos < cols-1 && yPos < rows-1)
+        {
+            clickTile(xPos+1, yPos+1,cols,rows);
+        }
+    }
+}
+// checks if you win
+void Board::checkWon()
+{
+    if(ClickNum+FlagNum ==400 or ClickNum+mineNum ==400 )
+    {
+        dbM =false;
+
+        W = true;
+    }
+}
+//At the end of the game if you lose
+void Board::end()
+{
+    dbM = true;
+    L = true;
+}
+//Board constructor
+Board::Board(int cols, int rows, int mineNum)
+{
+    getTile(cols,rows);
+    srand(time(NULL));
+    load();
+    textures.push_back(counter0);
+    textures.push_back(counter1);
+    textures.push_back(counter2);
+    textures.push_back(counter3);
+    textures.push_back(counter4);
+    textures.push_back(counter5);
+    textures.push_back(counter6);
+    textures.push_back(counter7);
+    textures.push_back(counter8);
+    textures.push_back(counter9);
+    textures.push_back(counter10);
+    for(unsigned int x = 0; x < cols; x++)
+    {
+        for (unsigned int y = 0; y <rows; y++)
+        {
+            tiles[x][y] = new Tile;
+            tiles[x][y]->setX(x);
+            tiles[x][y]->setY(y);
+        }
+    }
+    map<int, int> mineMap = Rand(mineNum);
+    generateMineOnBoard(mineMap,cols,rows);
+
+    calculateAdjTiles(cols,rows);
+}
+//resets the board
+void Board::reset(int cols, int rows)
+{
+    getTile(cols,rows);
+    dbM = false;
+    mineNum = 0;
+    ClickNum = 0;
+    FlagNum = 0;
+    L = false;
+    W = false;
+
+    for (auto &tile : tiles) {
+        for (auto &j : tile) {
+            delete j;
+        }
+    }
+
+    for(unsigned int x = 0; x < cols; x++)
+    {
+        for (unsigned int y = 0; y < rows; y++)
+        {
+            tiles[x][y] = new Tile;
+            tiles[x][y]->setX(x);
+            tiles[x][y]->setY(y);
+        }
+    }
+}
+
+map<int, int> Board::Rand(int mineNum)
+{
+    //Randomizes the mine placement uses the map function
+    map<int, int> ret;
+    for(unsigned int i = 0; i < 400; i++)
+    {
+        ret[i] = 0;
+    }
+    int numGenerated = 0;
+    while(numGenerated < mineNum)
+    {
+        int gen = rand() % 400;
+        if(ret[gen] == 0)
+        {
+            numGenerated++;
+            ret[gen] = 1;
+        }
+    }
+
+    return ret;
+}
+
+map<int, int> Board::Fileload(string filepath, int cols, int rows)
+{
+    //This method loads the test mines buttons
+    map<int, int> ret;
+    ifstream file(filepath);
+    string line;
+    int count = 0;
+    for(unsigned int i = 0; i < rows; i++)
+    {
+        getline(file, line);
+        for(unsigned int j = 0; j < cols; j++)
+        {
+            int mine = stoi(line.substr(j, 1));
+            ret[count] = mine;
+            count++;
+        }
+    }
+    return ret;
+}
+//This function randomly generates the mines on the board
+void Board::generateMineOnBoard(map<int, int> mineMap,int cols,int rows)
+{
+    getTile(cols,rows);
+
+    for(unsigned int x = 0; x < cols; x++)
+    {
+        for(unsigned int y = 0; y < rows; y++)
+        {
+            //in this loop we calculate the tiles and produce the mines on board
+            Tile* tile = tiles[x][y];
+            int mine = y * cols + x;
+            tile->setMines(mineMap[mine] != 0);
+            if(mineMap[mine] == 1) mineNum++;
+        }
+    }
+}
+//function to calculate adjacent tiles
+void Board::calculateAdjTiles(int cols, int rows)
+{
+    //gets tiles
+    getTile(cols, rows);
+    for(unsigned int x = 0; x < cols; x++)
+    {
+        for(unsigned int y = 0; y < rows; y++)
+        {
+            int numAdjacent = 0;
+            if(x > 0)
+            {
+                //each var is designed to calculate the tilenumAdj
+                if(tiles[x-1][y]->getMines()) numAdjacent++;
+            }
+            if(x < cols-1)
+            {
+                if(tiles[x+1][y]->getMines()) numAdjacent++;
+            }
+            if(y > 0)
+            {
+                if(tiles[x][y-1]->getMines()) numAdjacent++;
+            }
+            if(y < rows-1)
+            {
+                if(tiles[x][y+1]->getMines()) numAdjacent++;
+            }
+            if(x > 0 && y > 0)
+            {
+                if(tiles[x-1][y-1]->getMines()) numAdjacent++;
+            }
+            if(x > 0 && y < rows-1)
+            {
+                if(tiles[x-1][y+1]->getMines()) numAdjacent++;
+            }
+            if(x < cols-1 && y > 0)
+            {
+                if(tiles[x+1][y-1]->getMines()) numAdjacent++;
+            }
+            if(x < cols-1 && y < rows-1)
+            {
+                if(tiles[x+1][y+1]->getMines()) numAdjacent++;
+            }
+            tiles[x][y]->setNumAdjacentMines(numAdjacent);
+        }
+    }
+}
+//This  function initializes all of the texxtures and sprites on the minesweeper board
+void Board::initialize()
+{
+    defaultFace = new sf::Texture;
+    faceLose = new sf::Texture;
+    dubFace = new sf::Texture;
+    debugTexture = new sf::Texture;
+    testTexture1 = new sf::Texture;
+    testTexture2 = new sf::Texture;
+    testTexture3 = new sf::Texture;
+    counter0 = new sf::Texture;
+    counter1 = new sf::Texture;
+    counter2 = new sf::Texture;
+    counter3 = new sf::Texture;
+    counter4 = new sf::Texture;
+    counter5 = new sf::Texture;
+    counter6 = new sf::Texture;
+    counter7 = new sf::Texture;
+    counter8 = new sf::Texture;
+    counter9 = new sf::Texture;
+    counter10 = new sf::Texture;
+}
+//This function loads all of the files in one method rather than loading all of the files in the constructor.
+void Board::load()
+{
+    initSprite();
+    initialize();
+    defaultFace->loadFromFile("images/face_happy.png");
+    faceLose->loadFromFile("images/face_lose.png");
+    dubFace->loadFromFile("images/face_win.png");
+    debugTexture->loadFromFile("images/debug.png");
+    testTexture1->loadFromFile("images/test_1.png");
+    testTexture2->loadFromFile("images/test_2.png");
+    testTexture3 -> loadFromFile("images/test_3.png");
+    counter0->loadFromFile("images/digits.png", sf::Rect<int>(0, 0, 21, 32));
+    counter1->loadFromFile("images/digits.png", sf::Rect<int>(21, 0, 21, 32));
+    counter2->loadFromFile("images/digits.png", sf::Rect<int>(42, 0, 21, 32));
+    counter3->loadFromFile("images/digits.png", sf::Rect<int>(63, 0, 21, 32));
+    counter4->loadFromFile("images/digits.png", sf::Rect<int>(84, 0, 21, 32));
+    counter5->loadFromFile("images/digits.png", sf::Rect<int>(105, 0, 21, 32));
+    counter6->loadFromFile("images/digits.png", sf::Rect<int>(126, 0, 21, 32));
+    counter7->loadFromFile("images/digits.png", sf::Rect<int>(147, 0, 21, 32));
+    counter8->loadFromFile("images/digits.png", sf::Rect<int>(168, 0, 21, 32));
+    counter9->loadFromFile("images/digits.png", sf::Rect<int>(189, 0, 21, 32));
+    counter10->loadFromFile("images/digits.png", sf::Rect<int>(210, 0, 21, 32));
+
+}
+void Board::initSprite()
+{
+    spriteTest3 = new sf::Sprite;
+    debugSprite = new sf::Sprite;
+    resetButton = new sf::Sprite;
+    spriteTest1 = new sf::Sprite;
+    spriteTest2 = new sf::Sprite;
+    digit1 = new sf::Sprite;
+    digit2 = new sf::Sprite;
+    digit3 = new sf::Sprite;
+    digit4 = new sf::Sprite;
+}
+
+Board::Board()
+{
+
+}
+
