@@ -1,1 +1,52 @@
 
+#include <SFML/Graphics.hpp>
+#include <iostream>
+#include "Boards.h"
+#include <fstream>
+using namespace std;
+int main()
+
+{
+    ifstream file ("/Users/adarshbala/CLionProjects/OldProj3/config.cfg");
+    string line;
+    string rowNum;
+    string colNum;
+    int row;
+    int col;
+    int mineNum=0;
+    int width;
+    int height;
+    getline( file, line);
+    col =25;
+    getline(file,line);
+    row = 16;
+    getline(file,line);
+    if(file.is_open())
+    {
+        mineNum = 0;
+    }
+    width = col * 32;
+    height = (row *32)+88;
+    auto* window = new sf::RenderWindow(sf::VideoMode(width, height), "Minesweeper");
+    Board board(col,row,mineNum);
+    while (window->isOpen())
+    {
+        sf::Event event{};
+        while (window->pollEvent(event))
+        {
+            if (event.type == sf::Event::Closed)
+                window->close();
+            if (event.type == sf::Event::MouseButtonPressed)
+            {
+                bool leftClick = (event.mouseButton.button == sf::Mouse::Left);
+                board.click(event.mouseButton.x, event.mouseButton.y, leftClick,col,row,mineNum);
+            }
+        }
+
+        window->clear();
+        board.draw(window,col,row);
+        window->display();
+    }
+}
+
+
