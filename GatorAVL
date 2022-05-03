@@ -1,0 +1,532 @@
+#include <iostream>
+#include <sstream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+#include <regex>
+using namespace std;
+class TreeNode
+{
+public:
+    int ID;
+    string name;
+    int height;
+    TreeNode *left;
+    TreeNode *right;
+    TreeNode(int x, string y) : ID(x), name(y), left(nullptr), right(nullptr) {}
+};
+
+//nodeCount method to help with search Name function
+int NodeCount(TreeNode* root)
+{
+    static int nodeCount =0;
+    if(root== nullptr)
+    {
+        return nodeCount;
+    }
+    else
+    {
+        nodeCount= NodeCount(root->left);
+        nodeCount++;
+        nodeCount= NodeCount(root->right);
+    }
+    return nodeCount;
+}
+void searchID(TreeNode* root, int ID)
+{
+    if(root== nullptr)
+    {
+        cout<<"unsuccessful"<<endl;
+        return;
+    }
+    //If search by ID  matches, print out root
+    if(ID == root->ID)
+    {
+        cout<<root->name<<endl;
+        return;
+    }
+    //Searches the left side of the tree to find a matching ID
+    if(ID < root->ID)
+        searchID(root->left,ID);
+//Searches the right side of the tree to find a matching ID
+    else
+        searchID(root->right,ID);
+}
+void searchName(TreeNode* root, string name, int nodecount)
+{
+    static int count = 0;
+    static bool flag = false;
+    if (root == nullptr)
+    {
+        if(nodecount ==0)
+        {
+            cout<<"unsuccessful"<<endl;
+            return;
+        }
+        if(count >= nodecount)
+        {
+            if(count == nodecount)
+            {
+                if(flag == false)
+                    cout<<"unsuccessful"<<endl;
+                return;
+            }
+
+        }
+        return;
+    }
+
+    if(count <= nodecount )
+    {
+        searchName(root->left, name,nodecount);
+        count = count + 1;
+        //prints out name if search name matches
+        if (name == root->name)
+        {
+            flag =true;
+            cout << root->ID << endl;
+            return;
+        }
+        //Searches the right tree if nodecount is less thsn count
+        searchName(root->right, name,nodecount);
+
+    }
+}
+TreeNode* rotateLeft(TreeNode *root, string name, int ID)
+{
+    //Left rotation begins with descemdemt root
+    TreeNode *descendent = root->right->left;
+    //new parent is the parent returning with the rotation
+    TreeNode *newParent = root->right;
+    //set root to the left of new parent
+    newParent ->left = root ;
+    root->right = descendent ;
+    return newParent ;
+}
+
+TreeNode* rotateRight(TreeNode *root, string name, int ID)
+{
+    TreeNode *grandchild = root->left->right;
+    TreeNode *newParent = root->left;
+    newParent ->right = root ;
+    root->left = grandchild ;
+    return newParent ;
+}
+TreeNode* rotateLeftRight(TreeNode *node,string name, int ID)
+{
+    TreeNode *root, *child, *grandchild;
+    //Calls rotateLeft recursive
+    node->left = rotateLeft(node->left,name,ID);
+    //Calls rotateRight recursive
+    root = rotateRight(node,name,ID);
+    return root;
+}
+TreeNode* rotateRightLeft(TreeNode *root,string name, int ID)
+{
+    TreeNode  *child, *grandchild;
+    root->right = rotateRight(root->right,name,ID);
+    root = rotateLeft(root,name,ID);
+    return root;
+}
+int height(TreeNode* root)
+{
+
+    if (root == nullptr)
+    {
+        return 0;
+    }
+    //calculates left side height
+    int lheight = height(root->left);
+    //calculates right side height
+    int rheight = height(root->right);
+    //total height is the max of both
+    int height = max(lheight,rheight);
+    return 1 + height ;
+}
+int difference(TreeNode* root)
+{
+
+    int lheight = height(root->left);
+    int rheight = height(root->right);
+    int balanceFac = lheight - rheight;
+    return balanceFac;
+}
+TreeNode* balance(TreeNode *root,string name, int ID)
+{
+    int diffFactor=0;
+    int balance = difference(root);
+    if(balance > 1 or balance < -1)
+    {
+        if(balance > 1) // if tree is leftHeavy
+        {
+            if(root->left->right == nullptr)
+            {
+                diffFactor = 0;
+            }
+            else
+            {
+                diffFactor = difference(root->left);
+            }
+            if(diffFactor<0)
+            {
+                root = rotateLeftRight(root,name,ID);
+            }
+            else
+            {
+                root = rotateRight(root,name,ID);
+            }
+
+        }
+        else if(balance < -1)
+        {
+            if(root->right->left == nullptr)
+            {
+                diffFactor = 0;
+            }
+            else
+            {
+                diffFactor = difference(root->right);
+            }
+            if(diffFactor>0)
+            {
+                root = rotateRightLeft(root,name,ID);
+            }
+            else
+            {
+                root = rotateLeft(root,name,ID);
+            }
+        }
+    }
+    return root;
+}
+TreeNode* insert(TreeNode* root, string name, int ID)
+{
+
+    bool flag = false;
+    int check =0;
+    for(int i=0; i<name.length(); i++)
+    {
+        if ((name[i]>=48 && name[i]<=57)||
+            (name[i]>=65 && name[i]<=90)||
+            (name[i]>=97 && name[i]<=122))
+        {
+            continue;
+        }
+        else
+        {
+            cout<<"unsuccessful"<<endl;
+            check=1;
+            return root;
+        }
+    }
+    if (root == nullptr)
+    {
+        cout<<"successful"<<endl;
+
+        return new TreeNode(ID,name);
+    }
+
+    if(ID == root->ID)
+    {
+        cout<<"unsuccesful"<<endl;
+        return root;
+    }
+    if (ID < root->ID)
+        root->left = insert(root->left,name, ID);
+    else
+        root->right = insert(root->right,name, ID);
+
+    root = balance(root,name,ID);
+    return root;
+}
+
+string checkChar(string name)
+{
+
+}
+
+void inOrder(TreeNode* root, int &n)
+{
+
+    if(root== nullptr)
+    {
+        cout<<"";
+        return;
+    }
+    else
+    {
+        //recur on left subtree
+        inOrder(root->left,n);
+        if(n++ >0 )
+            cout<<", ";
+        cout<<root->name;
+        //print name of root
+        inOrder(root->right,n);
+        //then recur on right subtree
+    }
+}
+
+void preOrder(TreeNode* root,int &n)
+{
+    if(root== nullptr)
+    {
+        cout<<"";
+        return;
+    }
+
+    else
+    {
+        //first print name of root
+        if(n++ >0 )
+            cout<<", ";
+        cout<<root->name;
+        //then recur on left subtree
+        preOrder(root->left,n);
+        //then recur on right subtree
+        preOrder(root->right,n);
+    }
+}
+void postOrder(TreeNode* root,int &n)
+{
+    if(root== nullptr)
+    {
+        cout<<"";
+        return;
+    }
+
+    else
+    {
+        // recur on left subtree
+        postOrder(root->left,n);
+        //recur on right subtree
+        postOrder(root->right,n);
+        if(n++ >0 )
+            cout<<", ";
+        //print name of root
+        cout<<root->name;
+
+    }
+}
+TreeNode* minLeafNode(TreeNode* root)
+{
+    TreeNode* current = root;
+
+    // loop down to find the leftmost leaf
+    while ( current->left != nullptr)
+        current = current->left;
+    return current;
+}
+TreeNode* removeID(TreeNode* root, int ID)
+{
+
+    if(root == nullptr)
+        return root;
+
+    // ID exists in left Subtree
+    if(ID < root->ID)
+        root->left = removeID(root->left,ID);
+
+    else if(ID > root->ID)
+        root->right = removeID(root->right,ID);
+
+        //The ID to be deleted
+    else
+    {
+        if(root->left == nullptr && root->right == nullptr)
+        {
+            cout<<"successful"<<endl;
+            return nullptr;
+        }
+
+
+        else if(root->right == nullptr)
+        {
+            TreeNode *temp = root->left;
+            delete root;
+            cout<<"successful"<<endl;
+            return temp;
+
+        }
+        else if( root->left == nullptr)
+        {
+            TreeNode *temp = root->right;
+            delete root;
+            cout<<"successful"<<endl;
+            return temp;
+        }
+        TreeNode* temp = minLeafNode(root->right);
+        // Copy the inorder successor's content to this node
+        root->ID = temp->ID;
+        root->name = temp->name;
+        // Delete the inorder successor
+        root->right = removeID(root->right, temp->ID);
+    }
+
+//    balance(root,root->name,root->ID);
+    return root;
+}
+
+//Helper function for removeNOrder
+void removeHelp(TreeNode* root, vector<TreeNode*> &tree)
+{
+    if (root == nullptr) {
+        return;
+    }
+    //call removeHelp recursively, similalry to inorder print
+    removeHelp(root->left, tree);
+    tree.push_back(root);
+    removeHelp(root->right, tree);
+}
+TreeNode* removeNOrder(TreeNode* root, int n)
+{
+    vector<TreeNode*> tree;
+    //call helper function
+    removeHelp(root, tree);
+    //call remove ID with nth position of tree and root
+    removeID(root, tree[n]->ID);
+}
+
+
+vector<int> levelOrder(TreeNode* root){
+    vector<int> res;
+
+    //create a queue
+    queue<TreeNode*> que;
+    //push root node to queue
+    que.push(root);
+    //loop until queue is not empty
+    while(!que.empty()){
+        //get size of queue
+        int n = que.size();
+        int sum = 0;
+        while(n--){
+            //get the first element of queue
+            TreeNode* tempNode = que.front();
+            //pop the first element from queue
+            que.pop();
+            //add value of node popped to sum
+            sum += tempNode->ID;
+            //push left and right childs
+            if(tempNode->left)
+                que.push(tempNode->left);
+            if(tempNode->right)
+                que.push(tempNode->right);
+        }
+
+        //push sum to res
+        res.push_back(sum);
+    }
+    cout<<res.size()<<endl;
+    return res;
+}
+int main()
+{
+    TreeNode *root = nullptr;
+
+    int x=0;
+    string key="";
+    int count =0;
+    int searchId =0;
+    string command ="";
+    string opr ="";
+    string Name ="";
+    int ID =0;
+    // cout<<"enter number of tests"<<endl;
+    cin>>x;
+    cin.ignore();
+    count =x;
+
+    while(count > 0)
+    {
+        //   cout<<"Enter Command "<<endl;
+        getline(std::cin,  command);
+        int pos = command.find( " ");
+        opr = command.substr(0,pos);
+        command.erase(0,pos+1);
+        if(opr == "insert")
+        {
+            //parses the command
+            pos = command.find(" ");
+            Name = command.substr(0,pos);
+            command.erase(0,pos+1);
+            //removes quotes
+            if(Name.front() =='"')
+            {
+                Name.erase(remove(Name.begin(),Name.end(),'"'));
+                Name.erase(remove(Name.begin(),Name.end(),'"'));
+
+            }
+            pos = command.find(" ");
+            regex regx("[@_!#$%^&*()<\">?=/|}{~:]-+<=>=!=,'");
+
+           if(command.length() == 8 && regex_search(command,regx) == 0)
+            {
+                ID = stoi(command.substr(0,pos));
+                command.erase(0,pos+1);
+                root = insert(root,Name,ID);
+            }
+            else
+                cout<<"unsuccessful"<<endl;
+
+
+
+
+        }
+        else if(opr == "printInorder")
+        {
+            int n=0;
+            inOrder(root,n);
+            cout<<endl;
+        }
+        else if(opr == "printPreorder")
+        {
+            int n=0;
+            preOrder(root,n);
+            cout<<endl;
+        }
+        else if(opr == "printPostorder")
+        {
+            int n=0;
+            postOrder(root,n);
+            cout<<endl;
+        }
+        else if(opr == "search")
+        {
+            pos = command.find(" ");
+            key = command.substr(0,pos);
+            command.erase(0,pos+1);
+            if(key.front() =='"')
+            {
+                key.erase(remove(key.begin(),key.end(),'"'));
+                key.erase(remove(key.begin(),key.end(),'"'));
+                int nodecount = NodeCount(root);
+
+                searchName(root,key,nodecount);
+            }
+            else
+            {
+                searchID(root,stoi(key));
+            }
+        }
+        else if( opr == "printLevelCount")
+        {
+            levelOrder(root);
+        }
+        else if( opr == "remove")
+        {
+            pos = command.find(" ");
+            key = command.substr(0,pos);
+            command.erase(0,pos+1);
+            removeID(root,stoi(key));
+        }
+        else if(opr == "removeInorder")
+        {
+            pos = command.find(" ");
+            key = command.substr(0,pos);
+            command.erase(0,pos+1);
+            removeNOrder(root,stoi(key));
+        }
+        count--;
+    }
+
+}
